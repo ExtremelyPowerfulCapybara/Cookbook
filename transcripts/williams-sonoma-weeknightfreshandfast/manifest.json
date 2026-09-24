@@ -1,0 +1,222 @@
+[
+  {
+    "pdf_page": 11,
+    "source_image": "D:\\GitHub\\Cook\\pages\\williams-sonoma-weeknightfreshandfast\\page_011.png",
+    "model": "gpt-6-luna",
+    "elapsed_seconds": 9.79,
+    "input_tokens": 10148,
+    "output_tokens": 958,
+    "total_tokens": 11106,
+    "status": "ok",
+    "error": null
+  },
+  {
+    "pdf_page": 12,
+    "source_image": "D:\\GitHub\\Cook\\pages\\williams-sonoma-weeknightfreshandfast\\page_012.png",
+    "model": "gpt-6-luna",
+    "elapsed_seconds": 3.64,
+    "input_tokens": 10148,
+    "output_tokens": 192,
+    "total_tokens": 10340,
+    "status": "ok",
+    "error": null
+  },
+  {
+    "pdf_page": 13,
+    "source_image": "D:\\GitHub\\Cook\\pages\\williams-sonoma-weeknightfreshandfast\\page_013.png",
+    "model": "gpt-6-luna",
+    "elapsed_seconds": 5.0,
+    "input_tokens": 10148,
+    "output_tokens": 448,
+    "total_tokens": 10596,
+    "status": "ok",
+    "error": null
+  },
+  {
+    "pdf_page": 14,
+    "source_image": "D:\\GitHub\\Cook\\pages\\williams-sonoma-weeknightfreshandfast\\page_014.png",
+    "model": "gpt-6-luna",
+    "elapsed_seconds": 5.47,
+    "input_tokens": 10148,
+    "output_tokens": 501,
+    "total_tokens": 10649,
+    "status": "ok",
+    "error": null
+  },
+  {
+    "pdf_page": 15,
+    "source_image": "D:\\GitHub\\Cook\\pages\\williams-sonoma-weeknightfreshandfast\\page_015.png",
+    "model": "gpt-6-luna",
+    "elapsed_seconds": 8.27,
+    "input_tokens": 10148,
+    "output_tokens": 943,
+    "total_tokens": 11091,
+    "status": "ok",
+    "error": null
+  },
+  {
+    "pdf_page": 16,
+    "source_image": "D:\\GitHub\\Cook\\pages\\williams-sonoma-weeknightfreshandfast\\page_016.png",
+    "model": "gpt-6-luna",
+    "elapsed_seconds": 3.72,
+    "input_tokens": null,
+    "output_tokens": null,
+    "total_tokens": null,
+    "status": "flagged",
+    "error": "empty response"
+  },
+  {
+    "pdf_page": 17,
+    "source_image": "D:\\GitHub\\Cook\\pages\\williams-sonoma-weeknightfreshandfast\\page_017.png",
+    "model": "gpt-6-luna",
+    "elapsed_seconds": 8.78,
+    "input_tokens": 10148,
+    "output_tokens": 1003,
+    "total_tokens": 11151,
+    "status": "ok",
+    "error": null
+  },
+  {
+    "pdf_page": 18,
+    "source_image": "D:\\GitHub\\Cook\\pages\\williams-sonoma-weeknightfreshandfast\\page_018.png",
+    "model": "gpt-6-luna",
+    "elapsed_seconds": 4.73,
+    "input_tokens": 10148,
+    "output_tokens": 558,
+    "total_tokens": 10706,
+    "status": "ok",
+    "error": null
+  },
+  {
+    "pdf_page": 19,
+    "source_image": "D:\\GitHub\\Cook\\pages\\williams-sonoma-weeknightfreshandfast\\page_019.png",
+    "model": "gpt-6-luna",
+    "elapsed_seconds": 1.82,
+    "input_tokens": null,
+    "output_tokens": null,
+    "total_tokens": null,
+    "status": "flagged",
+    "error": "empty response"
+  },
+  {
+    "pdf_page": 20,
+    "source_image": "D:\\GitHub\\Cook\\pages\\williams-sonoma-weeknightfreshandfast\\page_020.png",
+    "model": "gpt-6-luna",
+    "elapsed_seconds": 7.45,
+    "input_tokens": 10148,
+    "output_tokens": 746,
+    "total_tokens": 10894,
+    "status": "ok",
+    "error": null
+  },
+  {
+    "pdf_page": 21,
+    "source_image": "D:\\GitHub\\Cook\\pages\\williams-sonoma-weeknightfreshandfast\\page_021.png",
+    "model": "gpt-6-luna",
+    "elapsed_seconds": 4.22,
+    "input_tokens": 10148,
+    "output_tokens": 387,
+    "total_tokens": 10535,
+    "status": "ok",
+    "error": null
+  },
+  {
+    "pdf_page": 22,
+    "source_image": "D:\\GitHub\\Cook\\pages\\williams-sonoma-weeknightfreshandfast\\page_022.png",
+    "model": "gpt-6-luna",
+    "elapsed_seconds": 3.59,
+    "input_tokens": null,
+    "output_tokens": null,
+    "total_tokens": null,
+    "status": "flagged",
+    "error": "empty response"
+  },
+  {
+    "pdf_page": 23,
+    "source_image": "D:\\GitHub\\Cook\\pages\\williams-sonoma-weeknightfreshandfast\\page_023.png",
+    "model": "gpt-6-luna",
+    "elapsed_seconds": 10.54,
+    "input_tokens": 10148,
+    "output_tokens": 1234,
+    "total_tokens": 11382,
+    "status": "ok",
+    "error": null
+  },
+  {
+    "pdf_page": 24,
+    "source_image": "D:\\GitHub\\Cook\\pages\\williams-sonoma-weeknightfreshandfast\\page_024.png",
+    "model": "gpt-6-luna",
+    "elapsed_seconds": 5.9,
+    "input_tokens": 10148,
+    "output_tokens": 616,
+    "total_tokens": 10764,
+    "status": "ok",
+    "error": null
+  },
+  {
+    "pdf_page": 25,
+    "source_image": "D:\\GitHub\\Cook\\pages\\williams-sonoma-weeknightfreshandfast\\page_025.png",
+    "model": "gpt-6-luna",
+    "elapsed_seconds": 3.13,
+    "input_tokens": null,
+    "output_tokens": null,
+    "total_tokens": null,
+    "status": "flagged",
+    "error": "empty response"
+  },
+  {
+    "pdf_page": 26,
+    "source_image": "D:\\GitHub\\Cook\\pages\\williams-sonoma-weeknightfreshandfast\\page_026.png",
+    "model": "gpt-6-luna",
+    "elapsed_seconds": 8.71,
+    "input_tokens": 10148,
+    "output_tokens": 981,
+    "total_tokens": 11129,
+    "status": "ok",
+    "error": null
+  },
+  {
+    "pdf_page": 27,
+    "source_image": "D:\\GitHub\\Cook\\pages\\williams-sonoma-weeknightfreshandfast\\page_027.png",
+    "model": "gpt-6-luna",
+    "elapsed_seconds": 6.04,
+    "input_tokens": 10148,
+    "output_tokens": 632,
+    "total_tokens": 10780,
+    "status": "ok",
+    "error": null
+  },
+  {
+    "pdf_page": 28,
+    "source_image": "D:\\GitHub\\Cook\\pages\\williams-sonoma-weeknightfreshandfast\\page_028.png",
+    "model": "gpt-6-luna",
+    "elapsed_seconds": 2.41,
+    "input_tokens": 10148,
+    "output_tokens": 126,
+    "total_tokens": 10274,
+    "status": "ok",
+    "error": null
+  },
+  {
+    "pdf_page": 29,
+    "source_image": "D:\\GitHub\\Cook\\pages\\williams-sonoma-weeknightfreshandfast\\page_029.png",
+    "model": "gpt-6-luna",
+    "elapsed_seconds": 10.76,
+    "input_tokens": 10148,
+    "output_tokens": 1339,
+    "total_tokens": 11487,
+    "status": "ok",
+    "error": null
+  },
+  {
+    "pdf_page": 30,
+    "source_image": "D:\\GitHub\\Cook\\pages\\williams-sonoma-weeknightfreshandfast\\page_030.png",
+    "model": "gpt-6-luna",
+    "elapsed_seconds": 7.24,
+    "input_tokens": 10148,
+    "output_tokens": 1071,
+    "total_tokens": 11219,
+    "status": "ok",
+    "error": null
+  }
+]

@@ -1,13 +1,8 @@
 """
 Recipe boundary detector.
 
-NOTE: this file did not previously exist in the repo. It was written from
-scratch as part of building the OCR pipeline (see ocr_pipeline.py) rather
-than being an existing, pre-validated component - treat its segmentation
-quality as unproven until checked against real transcripts.
-
-Assembles the per-page transcripts produced by ocr_pipeline.py, asks a local
-Ollama text model to segment them into individual recipes, and writes:
+Assembles the per-page transcripts produced by ocr_pipeline.py, asks an
+OpenAI text model to segment them into individual recipes, and writes:
   - ./recipes/{book_slug}.json   structured recipes (source_type: photo_ocr)
   - ./review/{book_slug}.txt     pages flagged for human review, with reasons
 
@@ -18,16 +13,13 @@ Usage:
 import argparse
 import json
 import re
-import sys
 from pathlib import Path
 
-import requests
+from dotenv import load_dotenv
+from openai import OpenAI
 
-OLLAMA_HOST = "http://localhost:11434"
-DEFAULT_TEXT_MODEL = "llama3.1:8b"
-NUM_CTX = 8192
-REQUEST_TIMEOUT_SECONDS = 300
-PAGE_MARKER_RE = re.compile(r"<<<PAGE (\d+)>>>")
+DEFAULT_MODEL = "gpt-6-luna"  # cheap, 1M+ context - whole-book transcripts fit in one call
+NUM_RETRIES = 1
 
 ROOT = Path(__file__).resolve().parent
 TRANSCRIPTS_DIR = ROOT / "transcripts"
@@ -54,6 +46,18 @@ JSON array: []
 """
 
 
+def get_client() -> OpenAI:
+    load_dotenv(ROOT / ".env")
+    import os
+
+    if not os.environ.get("OPENAI_API_KEY"):
+        raise SystemExit(
+            "OPENAI_API_KEY is not set. Set it yourself outside this session "
+            "(see .env.example / ocr_pipeline.py for instructions)."
+        )
+    return OpenAI()
+
+
 def load_transcript(book_slug: str) -> tuple[str, dict[int, str]]:
     transcript_dir = TRANSCRIPTS_DIR / book_slug
     if not transcript_dir.exists():
@@ -77,19 +81,15 @@ def load_transcript(book_slug: str) -> tuple[str, dict[int, str]]:
     return "\n\n".join(combined_parts), pages_by_num
 
 
-def call_ollama_json(prompt: str, model: str) -> str:
-    payload = {
-        "model": model,
-        "system": SEGMENT_SYSTEM_PROMPT,
-        "prompt": prompt,
-        "stream": False,
-        "options": {"num_ctx": NUM_CTX},
-    }
-    resp = requests.post(
-        f"{OLLAMA_HOST}/api/generate", json=payload, timeout=REQUEST_TIMEOUT_SECONDS
+def call_openai_json(client: OpenAI, combined_text: str, model: str) -> str:
+    response = client.responses.create(
+        model=model,
+        input=[
+            {"role": "system", "content": SEGMENT_SYSTEM_PROMPT},
+            {"role": "user", "content": combined_text},
+        ],
     )
-    resp.raise_for_status()
-    return resp.json().get("response", "").strip()
+    return (response.output_text or "").strip()
 
 
 def extract_json_array(raw: str) -> list | None:
@@ -107,9 +107,13 @@ def extract_json_array(raw: str) -> list | None:
         return None
 
 
-def segment_transcript(combined_text: str, model: str) -> list[dict]:
-    for attempt in range(2):
-        raw = call_ollama_json(combined_text, model)
+def segment_transcript(client: OpenAI, combined_text: str, model: str) -> list[dict] | None:
+    for attempt in range(NUM_RETRIES + 1):
+        try:
+            raw = call_openai_json(client, combined_text, model)
+        except Exception as exc:  # noqa: BLE001 - bounded retry wraps any API/network failure
+            print(f"    boundary detection attempt {attempt + 1}: request error: {exc}")
+            continue
         parsed = extract_json_array(raw)
         if parsed is not None:
             return parsed
@@ -158,9 +162,10 @@ def find_unflagged_gaps(
 
 
 def run(book_slug: str, model: str) -> tuple[list[dict], list[tuple[int, str]]]:
+    client = get_client()
     combined_text, pages_by_num = load_transcript(book_slug)
 
-    recipes_raw = segment_transcript(combined_text, model)
+    recipes_raw = segment_transcript(client, combined_text, model)
 
     RECIPES_DIR.mkdir(parents=True, exist_ok=True)
     REVIEW_DIR.mkdir(parents=True, exist_ok=True)
@@ -192,7 +197,7 @@ def run(book_slug: str, model: str) -> tuple[list[dict], list[tuple[int, str]]]:
 def main() -> None:
     parser = argparse.ArgumentParser(description="Segment OCR transcripts into recipes")
     parser.add_argument("book_slug")
-    parser.add_argument("--model", default=DEFAULT_TEXT_MODEL)
+    parser.add_argument("--model", default=DEFAULT_MODEL)
     args = parser.parse_args()
     run(args.book_slug, args.model)
 

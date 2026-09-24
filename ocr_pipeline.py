@@ -1,29 +1,26 @@
 """
-Cookbook OCR pipeline: renders PDF pages to PNG, transcribes each page via a
-local Ollama vision model, and saves the raw transcript per page.
+Cookbook OCR pipeline: renders PDF pages to PNG and transcribes each page
+via the OpenAI vision API.
 
 Usage:
-    python ocr_pipeline.py <pdf_path> [--max-pages N] [--model MODEL_NAME]
+    python ocr_pipeline.py <pdf_path> [--pages 17,18 | --pages 17-20] [--max-pages N] [--model MODEL_NAME]
 """
 
 import argparse
 import base64
 import re
-import subprocess
 import sys
 import time
 from pathlib import Path
 
-import requests
+from dotenv import load_dotenv
+from openai import OpenAI
 
-OLLAMA_HOST = "http://localhost:11434"
-DEFAULT_MODEL = "qwen3-vl:8b"
-FALLBACK_MODEL = "glm-ocr"
-CPU_OFFLOAD_SWITCH_THRESHOLD = 50  # percent
-CPU_CHECK_AFTER_PAGE = 3
-NUM_CTX = 4096
+DEFAULT_MODEL = "gpt-6-luna"
+IMAGE_DETAIL = "original"  # best for OCR: preserves fine detail/coordinates
+NUM_RETRIES = 1
+RETRY_BACKOFF_SECONDS = 2
 RENDER_DPI = 300
-REQUEST_TIMEOUT_SECONDS = 300
 
 ROOT = Path(__file__).resolve().parent
 PROMPT_PATH = ROOT / "ocr_prompt.txt"
@@ -36,158 +33,214 @@ def slugify(name: str) -> str:
     return slug or "book"
 
 
-def ensure_ollama_running() -> None:
-    try:
-        resp = requests.get(f"{OLLAMA_HOST}/api/tags", timeout=5)
-        resp.raise_for_status()
-        return
-    except requests.exceptions.RequestException:
-        pass
+def get_client() -> OpenAI:
+    load_dotenv(ROOT / ".env")
+    import os
 
-    print("Ollama not reachable at localhost:11434 - starting it...")
-    subprocess.Popen(
-        ["ollama", "serve"],
-        stdout=subprocess.DEVNULL,
-        stderr=subprocess.DEVNULL,
-        creationflags=subprocess.CREATE_NO_WINDOW if sys.platform == "win32" else 0,
-    )
-    for _ in range(20):
-        time.sleep(1)
-        try:
-            resp = requests.get(f"{OLLAMA_HOST}/api/tags", timeout=5)
-            if resp.ok:
-                return
-        except requests.exceptions.RequestException:
+    if not os.environ.get("OPENAI_API_KEY"):
+        raise SystemExit(
+            "OPENAI_API_KEY is not set. Set it yourself outside this session, e.g.:\n"
+            '  setx OPENAI_API_KEY "sk-..."   (then open a new terminal)\n'
+            "or copy .env.example to .env and fill in the real key in a text editor.\n"
+            "Never paste the key into a chat/agent conversation."
+        )
+    return OpenAI()
+
+
+def parse_page_spec(spec: str, total_pages: int) -> list[int]:
+    """Parses '17,18' or '17-20' or a mix into a sorted list of 1-indexed page numbers."""
+    pages: set[int] = set()
+    for chunk in spec.split(","):
+        chunk = chunk.strip()
+        if not chunk:
             continue
-    raise RuntimeError("Ollama did not become reachable after starting it")
+        if "-" in chunk:
+            start_s, end_s = chunk.split("-", 1)
+            start, end = int(start_s), int(end_s)
+        else:
+            start = end = int(chunk)
+        for p in range(start, end + 1):
+            if 1 <= p <= total_pages:
+                pages.add(p)
+    return sorted(pages)
 
 
-def render_pages(pdf_path: Path, book_slug: str, max_pages: int | None) -> list[Path]:
+def render_pages(pdf_path: Path, book_slug: str, page_numbers: list[int]) -> list[tuple[int, Path]]:
     import pymupdf
 
     out_dir = PAGES_DIR / book_slug
     out_dir.mkdir(parents=True, exist_ok=True)
 
     doc = pymupdf.open(pdf_path)
-    total = len(doc) if max_pages is None else min(max_pages, len(doc))
-    page_paths = []
-    for i in range(total):
-        page = doc[i]
+    rendered = []
+    for page_num in page_numbers:
+        page = doc[page_num - 1]
         pix = page.get_pixmap(dpi=RENDER_DPI)
-        out_path = out_dir / f"page_{i + 1:03d}.png"
+        out_path = out_dir / f"page_{page_num:03d}.png"
         pix.save(out_path)
-        page_paths.append(out_path)
+        rendered.append((page_num, out_path))
     doc.close()
-    return page_paths
+    return rendered
 
 
-def transcribe_page(image_path: Path, model: str, prompt: str) -> str:
+def transcribe_page(client: OpenAI, image_path: Path, model: str, prompt: str) -> dict:
     image_b64 = base64.b64encode(image_path.read_bytes()).decode("ascii")
-    payload = {
-        "model": model,
-        "prompt": prompt,
-        "images": [image_b64],
-        "stream": False,
-        "options": {"num_ctx": NUM_CTX},
-    }
-    resp = requests.post(
-        f"{OLLAMA_HOST}/api/generate", json=payload, timeout=REQUEST_TIMEOUT_SECONDS
+    response = client.responses.create(
+        model=model,
+        input=[
+            {
+                "role": "user",
+                "content": [
+                    {"type": "input_text", "text": prompt},
+                    {
+                        "type": "input_image",
+                        "image_url": f"data:image/png;base64,{image_b64}",
+                        "detail": IMAGE_DETAIL,
+                    },
+                ],
+            }
+        ],
     )
-    resp.raise_for_status()
-    return resp.json().get("response", "").strip()
+    usage = getattr(response, "usage", None)
+    return {
+        "text": (response.output_text or "").strip(),
+        "model": response.model,
+        "input_tokens": getattr(usage, "input_tokens", None),
+        "output_tokens": getattr(usage, "output_tokens", None),
+        "total_tokens": getattr(usage, "total_tokens", None),
+    }
 
 
-def transcribe_with_retry(image_path: Path, model: str, prompt: str) -> tuple[str, bool]:
-    """Returns (text, flagged). flagged=True if the page failed even after one retry."""
-    for attempt in range(2):
+def transcribe_with_retry(client: OpenAI, image_path: Path, model: str, prompt: str) -> dict:
+    """Returns a manifest-entry dict. status is 'ok', 'empty', or 'flagged'.
+
+    A genuinely empty response (e.g. a photo-only page with no text) is not
+    an error - retrying it would just burn another API call for the same
+    result, so it's recorded as 'empty' on the first attempt with no retry.
+    Only real API/network failures use the retry budget.
+    """
+    last_error = None
+    elapsed = 0.0
+    for attempt in range(NUM_RETRIES + 1):
+        start = time.monotonic()
         try:
-            text = transcribe_page(image_path, model, prompt)
-        except requests.exceptions.RequestException as exc:
-            text = ""
-            print(f"    attempt {attempt + 1} request error: {exc}")
-        if text:
-            return text, False
-        if attempt == 0:
-            print(f"    empty/failed response for {image_path.name}, retrying once...")
-    return "", True
-
-
-def check_cpu_offload(model: str) -> float | None:
-    """Parses `ollama ps` PROCESSOR column for the given model's CPU percentage."""
-    try:
-        result = subprocess.run(
-            ["ollama", "ps"], capture_output=True, text=True, timeout=10, check=True
-        )
-    except (subprocess.SubprocessError, FileNotFoundError) as exc:
-        print(f"    could not run 'ollama ps': {exc}")
-        return None
-
-    for line in result.stdout.splitlines()[1:]:
-        if not line.strip() or not line.startswith(model.split(":")[0]):
+            result = transcribe_page(client, image_path, model, prompt)
+        except Exception as exc:  # noqa: BLE001 - bounded retry wraps any API/network failure
+            elapsed = time.monotonic() - start
+            last_error = str(exc)
+            print(f"    attempt {attempt + 1} error: {last_error}")
+            if attempt < NUM_RETRIES:
+                print(f"    request failed for {image_path.name}, retrying once...")
+                time.sleep(RETRY_BACKOFF_SECONDS)
             continue
-        match = re.search(r"(\d+)%\s*CPU", line)
-        if match:
-            return float(match.group(1))
-        if "100% GPU" in line:
-            return 0.0
-    return None
+
+        elapsed = time.monotonic() - start
+        result["elapsed_seconds"] = round(elapsed, 2)
+        result["error"] = None
+        result["status"] = "ok" if result["text"] else "empty"
+        return result
+
+    return {
+        "text": "",
+        "model": model,
+        "input_tokens": None,
+        "output_tokens": None,
+        "total_tokens": None,
+        "elapsed_seconds": round(elapsed, 2),
+        "status": "flagged",
+        "error": last_error,
+    }
 
 
-def run(pdf_path: Path, max_pages: int | None, model_override: str | None) -> None:
-    ensure_ollama_running()
+def run(pdf_path: Path, page_numbers: list[int] | None, model: str, output_dir: Path) -> None:
+    client = get_client()
 
     book_slug = slugify(pdf_path.stem)
     prompt = PROMPT_PATH.read_text(encoding="utf-8")
 
-    transcripts_out = TRANSCRIPTS_DIR / book_slug
+    import pymupdf
+
+    with pymupdf.open(pdf_path) as doc:
+        total_pages = len(doc)
+
+    pages_to_run = page_numbers if page_numbers is not None else list(range(1, total_pages + 1))
+
+    transcripts_out = output_dir / book_slug
     transcripts_out.mkdir(parents=True, exist_ok=True)
 
-    print(f"Rendering pages for '{book_slug}' at {RENDER_DPI} DPI...")
-    page_paths = render_pages(pdf_path, book_slug, max_pages)
-    print(f"Rendered {len(page_paths)} page(s).")
+    print(f"Rendering {len(pages_to_run)} page(s) for '{book_slug}' at {RENDER_DPI} DPI...")
+    rendered = render_pages(pdf_path, book_slug, pages_to_run)
 
-    model = model_override or DEFAULT_MODEL
-    switched = False
-    flagged_pages: list[int] = []
+    manifest = []
+    for idx, (page_num, image_path) in enumerate(rendered, start=1):
+        print(f"[{idx}/{len(rendered)}] OCR page {page_num} with model={model}")
+        result = transcribe_with_retry(client, image_path, model, prompt)
 
-    for idx, image_path in enumerate(page_paths, start=1):
-        print(f"[{idx}/{len(page_paths)}] OCR page {idx} with model={model}")
-        text, flagged = transcribe_with_retry(image_path, model, prompt)
-        if flagged:
-            flagged_pages.append(idx)
-            text = "[illegible] OCR request failed after retry\n" + text
+        text = result["text"]
+        if result["status"] == "flagged":
+            text = f"[illegible] OCR request failed after retry: {result['error']}\n" + text
+        elif result["status"] == "empty":
+            text = "[no text on page]"
 
-        out_path = transcripts_out / f"page_{idx:03d}.txt"
+        out_path = transcripts_out / f"page_{page_num:03d}.txt"
         out_path.write_text(text, encoding="utf-8")
 
-        if not switched and not model_override and idx >= CPU_CHECK_AFTER_PAGE:
-            cpu_pct = check_cpu_offload(model)
-            if cpu_pct is not None and cpu_pct > CPU_OFFLOAD_SWITCH_THRESHOLD:
-                print(
-                    f"    ollama ps shows {cpu_pct:.0f}% CPU offload for {model} "
-                    f"(>{CPU_OFFLOAD_SWITCH_THRESHOLD}%) - switching to {FALLBACK_MODEL}"
-                )
-                model = FALLBACK_MODEL
-                switched = True
+        manifest.append(
+            {
+                "pdf_page": page_num,
+                "source_image": str(image_path),
+                "model": result["model"],
+                "elapsed_seconds": result["elapsed_seconds"],
+                "input_tokens": result["input_tokens"],
+                "output_tokens": result["output_tokens"],
+                "total_tokens": result["total_tokens"],
+                "status": result["status"],
+                "error": result["error"],
+            }
+        )
 
+    import json
+
+    manifest_path = transcripts_out / "manifest.json"
+    manifest_path.write_text(json.dumps(manifest, indent=2), encoding="utf-8")
+
+    flagged = [m["pdf_page"] for m in manifest if m["status"] == "flagged"]
+    empty = [m["pdf_page"] for m in manifest if m["status"] == "empty"]
+    total_tokens = sum(m["total_tokens"] or 0 for m in manifest)
     print(f"Done. Transcripts written to {transcripts_out}")
-    if flagged_pages:
-        print(f"Flagged pages (failed after retry): {flagged_pages}")
-    if switched:
-        print(f"Model was switched from {DEFAULT_MODEL} to {FALLBACK_MODEL} mid-run.")
+    print(f"Manifest written to {manifest_path}")
+    print(f"Total tokens used: {total_tokens}")
+    if empty:
+        print(f"Pages with no text (photo-only, not an error): {empty}")
+    if flagged:
+        print(f"Flagged pages (failed after retry): {flagged}")
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Cookbook OCR pipeline")
+    parser = argparse.ArgumentParser(description="Cookbook OCR pipeline (OpenAI vision)")
     parser.add_argument("pdf_path", type=Path)
+    parser.add_argument("--pages", type=str, default=None, help="e.g. '17,18' or '17-20'")
     parser.add_argument("--max-pages", type=int, default=None)
-    parser.add_argument("--model", type=str, default=None)
+    parser.add_argument("--model", type=str, default=DEFAULT_MODEL)
+    parser.add_argument("--output-dir", type=Path, default=TRANSCRIPTS_DIR)
     args = parser.parse_args()
 
     if not args.pdf_path.exists():
         raise SystemExit(f"PDF not found: {args.pdf_path}")
 
-    run(args.pdf_path, args.max_pages, args.model)
+    import pymupdf
+
+    with pymupdf.open(args.pdf_path) as doc:
+        total_pages = len(doc)
+
+    if args.pages:
+        page_numbers = parse_page_spec(args.pages, total_pages)
+    elif args.max_pages:
+        page_numbers = list(range(1, min(args.max_pages, total_pages) + 1))
+    else:
+        page_numbers = None
+
+    run(args.pdf_path, page_numbers, args.model, args.output_dir)
 
 
 if __name__ == "__main__":
