@@ -29,7 +29,7 @@ def load_recipes() -> list[dict]:
     if not RECIPES_DIR.exists():
         return recipes
 
-    for md_path in sorted(RECIPES_DIR.glob("*.md")):
+    for md_path in sorted(RECIPES_DIR.rglob("*.md")):
         try:
             post = frontmatter.load(md_path)
         except Exception:  # noqa: BLE001 - skip any note that fails to parse rather than 500 the whole page

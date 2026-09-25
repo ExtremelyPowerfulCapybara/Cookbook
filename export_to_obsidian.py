@@ -121,13 +121,14 @@ def recipe_to_markdown(recipe: dict) -> str:
 
 def export_book(recipes_path: Path, output_dir: Path) -> int:
     recipes = json.loads(recipes_path.read_text(encoding="utf-8"))
-    output_dir.mkdir(parents=True, exist_ok=True)
+    book_dir = output_dir / recipes_path.stem
+    book_dir.mkdir(parents=True, exist_ok=True)
 
     count = 0
     for recipe in recipes:
         recipe_id = recipe.get("id", "recipe")
         title_slug = slugify(recipe.get("title", ""))
-        out_path = output_dir / f"{recipe_id}-{title_slug}.md"
+        out_path = book_dir / f"{recipe_id}-{title_slug}.md"
         out_path.write_text(recipe_to_markdown(recipe), encoding="utf-8")
         count += 1
     return count
