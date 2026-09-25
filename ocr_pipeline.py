@@ -23,6 +23,24 @@ NUM_RETRIES = 1
 RETRY_BACKOFF_SECONDS = 2
 RENDER_DPI = 300
 
+# USD per 1M tokens, synchronous API rates (Batch API is ~50% cheaper but
+# defers results up to 24h, which doesn't fit the live per-page progress bar).
+PRICING = {
+    "gpt-6-luna": {"input": 0.10, "cached_input": 0.01, "output": 0.50},
+}
+
+
+def token_cost(input_tokens: int, cached_tokens: int, output_tokens: int, model: str) -> float | None:
+    pricing = PRICING.get(model)
+    if pricing is None:
+        return None
+    uncached_input = max(input_tokens - cached_tokens, 0)
+    return (
+        uncached_input / 1_000_000 * pricing["input"]
+        + cached_tokens / 1_000_000 * pricing["cached_input"]
+        + output_tokens / 1_000_000 * pricing["output"]
+    )
+
 ROOT = Path(__file__).resolve().parent
 PROMPT_PATH = ROOT / "ocr_prompt.txt"
 PAGES_DIR = ROOT / "pages"
@@ -103,10 +121,12 @@ def transcribe_page(client: OpenAI, image_path: Path, model: str, prompt: str) -
         ],
     )
     usage = getattr(response, "usage", None)
+    input_details = getattr(usage, "input_tokens_details", None)
     return {
         "text": (response.output_text or "").strip(),
         "model": response.model,
         "input_tokens": getattr(usage, "input_tokens", None),
+        "cached_tokens": getattr(input_details, "cached_tokens", None) if input_details else None,
         "output_tokens": getattr(usage, "output_tokens", None),
         "total_tokens": getattr(usage, "total_tokens", None),
     }
@@ -145,6 +165,7 @@ def transcribe_with_retry(client: OpenAI, image_path: Path, model: str, prompt: 
         "text": "",
         "model": model,
         "input_tokens": None,
+        "cached_tokens": None,
         "output_tokens": None,
         "total_tokens": None,
         "elapsed_seconds": round(elapsed, 2),
@@ -174,11 +195,21 @@ def run(pdf_path: Path, page_numbers: list[int] | None, model: str, output_dir: 
 
     manifest = []
     running_tokens = 0
+    running_cost = 0.0
+    cost_known = model in PRICING
     progress = tqdm(rendered, unit="page", desc=f"OCR ({model})")
     for page_num, image_path in progress:
-        progress.set_postfix_str(f"page {page_num}, {running_tokens} tokens")
+        cost_str = f", ~${running_cost:.2f}" if cost_known else ""
+        progress.set_postfix_str(f"page {page_num}, {running_tokens} tokens{cost_str}")
         result = transcribe_with_retry(client, image_path, model, prompt)
         running_tokens += result["total_tokens"] or 0
+        page_cost = token_cost(
+            result["input_tokens"] or 0,
+            result["cached_tokens"] or 0,
+            result["output_tokens"] or 0,
+            model,
+        )
+        running_cost += page_cost or 0.0
 
         text = result["text"]
         if result["status"] == "flagged":
@@ -196,8 +227,10 @@ def run(pdf_path: Path, page_numbers: list[int] | None, model: str, output_dir: 
                 "model": result["model"],
                 "elapsed_seconds": result["elapsed_seconds"],
                 "input_tokens": result["input_tokens"],
+                "cached_tokens": result["cached_tokens"],
                 "output_tokens": result["output_tokens"],
                 "total_tokens": result["total_tokens"],
+                "cost_usd": round(page_cost, 6) if page_cost is not None else None,
                 "status": result["status"],
                 "error": result["error"],
             }
@@ -213,9 +246,14 @@ def run(pdf_path: Path, page_numbers: list[int] | None, model: str, output_dir: 
     flagged = [m["pdf_page"] for m in manifest if m["status"] == "flagged"]
     empty = [m["pdf_page"] for m in manifest if m["status"] == "empty"]
     total_tokens = sum(m["total_tokens"] or 0 for m in manifest)
+    total_cost = sum(m["cost_usd"] or 0 for m in manifest) if model in PRICING else None
     print(f"Done. Transcripts written to {transcripts_out}")
     print(f"Manifest written to {manifest_path}")
     print(f"Total tokens used: {total_tokens}")
+    if total_cost is not None:
+        print(f"Estimated cost: ${total_cost:.2f}")
+    else:
+        print(f"Estimated cost: unknown (no pricing data for model '{model}')")
     if empty:
         print(f"Pages with no text (photo-only, not an error): {empty}")
     if flagged:
