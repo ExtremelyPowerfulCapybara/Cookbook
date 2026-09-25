@@ -1,0 +1,13 @@
+services:
+  recipe-app:
+    build: .
+    container_name: recipe-app
+    restart: always
+    ports:
+      - "5050:5000"  # adjust the host port if it collides with something else
+    volumes:
+      # Point this at the Recipes/ folder inside the vault once it lives on
+      # this machine. Read-only: the app only ever reads notes, never writes.
+      - "C:/PATH/TO/Second Brain/Recipes:/data/recipes:ro"
+    environment:
+      RECIPES_DIR: /data/recipes

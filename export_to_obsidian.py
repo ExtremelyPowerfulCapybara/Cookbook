@@ -18,6 +18,47 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent
 RECIPES_DIR = ROOT / "recipes"
 
+# Keyword -> tag, scanned across title + ingredients. Order doesn't matter;
+# a recipe can pick up multiple tags (protein, dish type, cook method).
+TAG_KEYWORDS: dict[str, list[str]] = {
+    "chicken": ["chicken"],
+    "beef": ["beef", "steak", "brisket"],
+    "pork": ["pork", "bacon", "ham", "prosciutto", "sausage"],
+    "lamb": ["lamb"],
+    "turkey": ["turkey"],
+    "salmon": ["salmon"],
+    "shrimp": ["shrimp", "prawn"],
+    "seafood": [
+        "fish", "cod", "halibut", "tilapia", "tuna", "clam", "mussel",
+        "crab", "lobster", "scallop", "anchov",
+    ],
+    "tofu": ["tofu"],
+    "egg": ["egg"],
+    "pasta": ["pasta", "penne", "spaghetti", "linguine", "fettuccine", "orzo", "noodle"],
+    "rice": ["rice", "risotto"],
+    "soup": ["soup", "stew", "chowder"],
+    "salad": ["salad"],
+    "pizza": ["pizza"],
+    "beans": ["bean"],
+    "grilled": ["grill"],
+    "roasted": ["roast"],
+    "braised": ["braise"],
+    "sauteed": ["saut"],
+    "baked": ["bake"],
+    "broiled": ["broil"],
+    "curry": ["curry", "curried"],
+    "chili": ["chili"],
+}
+
+
+def extract_tags(recipe: dict) -> list[str]:
+    haystack = " ".join([recipe.get("title") or ""] + (recipe.get("ingredients") or [])).lower()
+    return [
+        tag
+        for tag, keywords in TAG_KEYWORDS.items()
+        if any(re.search(rf"\b{re.escape(kw)}", haystack) for kw in keywords)
+    ]
+
 
 def slugify(text: str) -> str:
     slug = re.sub(r"[^a-z0-9]+", "-", text.lower()).strip("-")
@@ -25,7 +66,7 @@ def slugify(text: str) -> str:
 
 
 def yaml_escape(value: str) -> str:
-    return value.replace("\\", "\\\\").replace('"', '\\"')
+    return value.replace("\\", "\\\\").replace('"', '\\"').replace("\n", "\\n")
 
 
 def yaml_list(items: list[str]) -> str:
@@ -43,17 +84,20 @@ def recipe_to_markdown(recipe: dict) -> str:
     source_book = recipe.get("source_book")
     source_pages = recipe.get("source_pages") or [None, None]
 
-    frontmatter = "\n".join(
-        [
-            "---",
-            f'title: "{yaml_escape(title)}"',
-            f"source_book: {source_book}",
-            f"source_pages: [{source_pages[0]}, {source_pages[1]}]",
-            "tags: [recipe]",
-            f"ingredients:{yaml_list(ingredients)}",
-            "---",
-        ]
-    )
+    tags = ["recipe"] + extract_tags(recipe)
+
+    frontmatter_lines = [
+        "---",
+        f'title: "{yaml_escape(title)}"',
+        f"source_book: {source_book}",
+        f"source_pages: [{source_pages[0]}, {source_pages[1]}]",
+        f"tags: [{', '.join(tags)}]",
+        f"ingredients:{yaml_list(ingredients)}",
+        f"instructions:{yaml_list(instructions)}",
+        f'notes: "{yaml_escape(notes)}"' if notes else "notes:",
+        "---",
+    ]
+    frontmatter = "\n".join(frontmatter_lines)
 
     body_lines = [f"# {title}", "", "## Ingredients"]
     if ingredients:

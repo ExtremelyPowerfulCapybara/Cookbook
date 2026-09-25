@@ -15,6 +15,7 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 from openai import OpenAI
+from tqdm import tqdm
 
 DEFAULT_MODEL = "gpt-6-luna"
 IMAGE_DETAIL = "original"  # best for OCR: preserves fine detail/coordinates
@@ -73,7 +74,7 @@ def render_pages(pdf_path: Path, book_slug: str, page_numbers: list[int]) -> lis
 
     doc = pymupdf.open(pdf_path)
     rendered = []
-    for page_num in page_numbers:
+    for page_num in tqdm(page_numbers, unit="page", desc="Rendering"):
         page = doc[page_num - 1]
         pix = page.get_pixmap(dpi=RENDER_DPI)
         out_path = out_dir / f"page_{page_num:03d}.png"
@@ -128,9 +129,9 @@ def transcribe_with_retry(client: OpenAI, image_path: Path, model: str, prompt: 
         except Exception as exc:  # noqa: BLE001 - bounded retry wraps any API/network failure
             elapsed = time.monotonic() - start
             last_error = str(exc)
-            print(f"    attempt {attempt + 1} error: {last_error}")
+            tqdm.write(f"    attempt {attempt + 1} error: {last_error}")
             if attempt < NUM_RETRIES:
-                print(f"    request failed for {image_path.name}, retrying once...")
+                tqdm.write(f"    request failed for {image_path.name}, retrying once...")
                 time.sleep(RETRY_BACKOFF_SECONDS)
             continue
 
@@ -172,9 +173,12 @@ def run(pdf_path: Path, page_numbers: list[int] | None, model: str, output_dir: 
     rendered = render_pages(pdf_path, book_slug, pages_to_run)
 
     manifest = []
-    for idx, (page_num, image_path) in enumerate(rendered, start=1):
-        print(f"[{idx}/{len(rendered)}] OCR page {page_num} with model={model}")
+    running_tokens = 0
+    progress = tqdm(rendered, unit="page", desc=f"OCR ({model})")
+    for page_num, image_path in progress:
+        progress.set_postfix_str(f"page {page_num}, {running_tokens} tokens")
         result = transcribe_with_retry(client, image_path, model, prompt)
+        running_tokens += result["total_tokens"] or 0
 
         text = result["text"]
         if result["status"] == "flagged":
@@ -198,6 +202,8 @@ def run(pdf_path: Path, page_numbers: list[int] | None, model: str, output_dir: 
                 "error": result["error"],
             }
         )
+        if result["status"] == "flagged":
+            tqdm.write(f"    page {page_num}: flagged after retry ({result['error']})")
 
     import json
 

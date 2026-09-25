@@ -1,0 +1,222 @@
+:root {
+  --bg: #1a1a1a;
+  --panel: #242424;
+  --border: #3a3a3a;
+  --text: #eee;
+  --muted: #999;
+  --accent: #e8a33d;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: -apple-system, "Segoe UI", Roboto, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+}
+
+header {
+  position: sticky;
+  top: 0;
+  background: var(--bg);
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid var(--border);
+  z-index: 10;
+}
+
+h1 { margin: 0 0 0.75rem; font-size: 1.4rem; }
+
+#search-row {
+  display: flex;
+  gap: 0.5rem;
+  max-width: 560px;
+}
+
+#search {
+  flex: 1;
+  width: 100%;
+  max-width: 480px;
+  padding: 0.6rem 0.8rem;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--panel);
+  color: var(--text);
+  font-size: 1rem;
+}
+
+#random-btn {
+  padding: 0.6rem 1rem;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--panel);
+  color: var(--text);
+  font-size: 0.9rem;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+#random-btn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+#tag-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-top: 0.75rem;
+}
+
+.tag-chip {
+  padding: 0.25rem 0.7rem;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--panel);
+  color: var(--muted);
+  font-size: 0.8rem;
+  cursor: pointer;
+  user-select: none;
+}
+
+.tag-chip.active {
+  background: var(--accent);
+  color: #1a1a1a;
+  border-color: var(--accent);
+}
+
+#grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 1rem;
+  padding: 1.5rem;
+}
+
+.card {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 1rem;
+  cursor: pointer;
+  transition: border-color 0.15s;
+}
+
+.card:hover { border-color: var(--accent); }
+
+.card h3 { margin: 0 0 0.4rem; font-size: 1rem; text-transform: capitalize; }
+
+.card .book { color: var(--muted); font-size: 0.8rem; margin-bottom: 0.5rem; }
+
+.card .tags { display: flex; flex-wrap: wrap; gap: 0.3rem; }
+
+.card .tag {
+  font-size: 0.7rem;
+  padding: 0.1rem 0.5rem;
+  border-radius: 999px;
+  background: #333;
+  color: var(--muted);
+}
+
+#empty-state {
+  color: var(--muted);
+  padding: 2rem;
+  text-align: center;
+}
+
+#detail-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.65);
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 3rem 1rem;
+  overflow-y: auto;
+  z-index: 20;
+}
+
+#detail-overlay.hidden { display: none; }
+
+#detail-panel {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  max-width: 680px;
+  width: 100%;
+  padding: 2rem;
+  position: relative;
+}
+
+#detail-actions {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+#detail-print {
+  padding: 0.35rem 0.8rem;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--muted);
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+
+#detail-print:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+#detail-close {
+  background: none;
+  border: none;
+  color: var(--muted);
+  font-size: 1.5rem;
+  cursor: pointer;
+  line-height: 1;
+}
+
+#detail-content h2 { text-transform: capitalize; margin-top: 0; }
+#detail-content h4 { color: var(--accent); margin-bottom: 0.4rem; }
+#detail-content .book { color: var(--muted); font-size: 0.85rem; margin-bottom: 1rem; }
+#detail-content ol, #detail-content ul { padding-left: 1.2rem; }
+#detail-content li { margin-bottom: 0.4rem; }
+#detail-content .notes { white-space: pre-wrap; color: var(--muted); font-size: 0.9rem; }
+
+@media print {
+  header,
+  #detail-close,
+  #detail-print {
+    display: none !important;
+  }
+
+  #grid {
+    display: none;
+  }
+
+  #detail-overlay {
+    position: static;
+    background: none;
+    padding: 0;
+    display: block;
+  }
+
+  #detail-panel {
+    box-shadow: none;
+    border: none;
+    max-width: none;
+    padding: 0;
+  }
+
+  #detail-content, #detail-content h2, #detail-content h4, #detail-content .notes {
+    color: #000;
+  }
+
+  #detail-content .book {
+    color: #444;
+  }
+}
