@@ -1,222 +1,647 @@
 :root {
-  --bg: #1a1a1a;
-  --panel: #242424;
-  --border: #3a3a3a;
-  --text: #eee;
-  --muted: #999;
-  --accent: #e8a33d;
+  --bg: #ddd2b8;
+  --surface: #eee5cf;
+  --surface-2: #e3d8bd;
+  --line: #b9a980;
+  --ink: #2a2015;
+  --ink-soft: #6b5d42;
+  --ember: #a8451f;
+  --ember-soft: #c96a3f;
+  --moss: #56612f;
+  --shadow: rgba(35, 25, 10, 0.22);
+  --font-display: "Fraunces", Georgia, serif;
+  --font-body: "Karla", -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #1b1712;
+    --surface: #272019;
+    --surface-2: #221b15;
+    --line: #4c3f2c;
+    --ink: #f1e7d4;
+    --ink-soft: #ab9c7c;
+    --ember: #e2793c;
+    --ember-soft: #f0965f;
+    --moss: #93a869;
+    --shadow: rgba(0, 0, 0, 0.55);
+    color-scheme: dark;
+  }
+}
+
+:root[data-theme="dark"] {
+  --bg: #1b1712;
+  --surface: #272019;
+  --surface-2: #221b15;
+  --line: #4c3f2c;
+  --ink: #f1e7d4;
+  --ink-soft: #ab9c7c;
+  --ember: #e2793c;
+  --ember-soft: #f0965f;
+  --moss: #93a869;
+  --shadow: rgba(0, 0, 0, 0.55);
+  color-scheme: dark;
 }
 
 * { box-sizing: border-box; }
 
 body {
   margin: 0;
-  font-family: -apple-system, "Segoe UI", Roboto, sans-serif;
   background: var(--bg);
-  color: var(--text);
+  color: var(--ink);
+  font-family: var(--font-body);
 }
 
-header {
+a { color: inherit; }
+
+/* ---------- top bar ---------- */
+#topbar {
   position: sticky;
   top: 0;
+  z-index: 30;
   background: var(--bg);
-  padding: 1rem 1.5rem;
-  border-bottom: 1px solid var(--border);
-  z-index: 10;
+  border-bottom: 1px solid var(--line);
+  padding: 1.1rem 1.5rem 0;
 }
 
-h1 { margin: 0 0 0.75rem; font-size: 1.4rem; }
+#topbar-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+#wordmark {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-weight: 600;
+  font-size: 1.9rem;
+  margin: 0;
+  letter-spacing: 0.005em;
+}
+
+#wordmark .accent-dot { color: var(--ember); }
+
+#theme-toggle {
+  display: flex;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  overflow: hidden;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+}
+
+#theme-toggle button {
+  border: none;
+  background: transparent;
+  color: var(--ink-soft);
+  padding: 0.4rem 0.85rem;
+  cursor: pointer;
+}
+
+#theme-toggle button.active {
+  background: var(--ember);
+  color: #fff8ec;
+}
+
+#tabs {
+  display: flex;
+  gap: 1.5rem;
+  max-width: 1200px;
+  margin: 0.9rem auto 0;
+}
+
+#tabs button {
+  background: none;
+  border: none;
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: 0.92rem;
+  color: var(--ink-soft);
+  padding: 0 0.1rem 0.75rem;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+}
+
+#tabs button.active {
+  color: var(--ink);
+  border-bottom-color: var(--ember);
+}
+
+/* ---------- controls row (All Recipes tab) ---------- */
+#controls {
+  max-width: 1200px;
+  margin: 1.1rem auto 0;
+  padding: 0 1.5rem;
+}
 
 #search-row {
   display: flex;
-  gap: 0.5rem;
-  max-width: 560px;
+  gap: 0.6rem;
+  max-width: 520px;
+  flex-wrap: wrap;
 }
 
 #search {
   flex: 1;
-  width: 100%;
-  max-width: 480px;
-  padding: 0.6rem 0.8rem;
-  border-radius: 8px;
-  border: 1px solid var(--border);
-  background: var(--panel);
-  color: var(--text);
-  font-size: 1rem;
+  min-width: 200px;
+  padding: 0.6rem 0.85rem;
+  border-radius: 6px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: 0.95rem;
 }
+
+#search::placeholder { color: var(--ink-soft); }
 
 #random-btn {
   padding: 0.6rem 1rem;
-  border-radius: 8px;
-  border: 1px solid var(--border);
-  background: var(--panel);
-  color: var(--text);
-  font-size: 0.9rem;
+  border-radius: 6px;
+  border: 1px solid var(--ember);
+  background: transparent;
+  color: var(--ember);
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: 0.85rem;
   cursor: pointer;
   white-space: nowrap;
 }
 
-#random-btn:hover {
-  border-color: var(--accent);
-  color: var(--accent);
-}
+#random-btn:hover { background: var(--ember); color: #fff8ec; }
 
 #tag-filters {
   display: flex;
   flex-wrap: wrap;
   gap: 0.4rem;
-  margin-top: 0.75rem;
+  margin-top: 0.8rem;
 }
 
 .tag-chip {
   padding: 0.25rem 0.7rem;
   border-radius: 999px;
-  border: 1px solid var(--border);
-  background: var(--panel);
-  color: var(--muted);
-  font-size: 0.8rem;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--ink-soft);
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
   cursor: pointer;
   user-select: none;
 }
 
+.tag-chip:hover { border-color: var(--moss); color: var(--moss); }
+
 .tag-chip.active {
-  background: var(--accent);
-  color: #1a1a1a;
-  border-color: var(--accent);
+  background: var(--moss);
+  color: #fbf7ea;
+  border-color: var(--moss);
 }
 
-#grid {
+/* ---------- recipe grid (index cards) ---------- */
+#grid, .card-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
   gap: 1rem;
   padding: 1.5rem;
+  max-width: 1200px;
+  margin: 0 auto;
 }
+
+.card-grid { padding: 0; max-width: none; margin: 1rem 0 0; }
 
 .card {
-  background: var(--panel);
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  padding: 1rem;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  padding: 1rem 1.1rem 1.05rem;
   cursor: pointer;
-  transition: border-color 0.15s;
+  box-shadow: 0 2px 6px var(--shadow);
+  position: relative;
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
 }
 
-.card:hover { border-color: var(--accent); }
+.card::before {
+  content: "";
+  position: absolute;
+  top: 0.85rem;
+  left: 1.1rem;
+  right: 1.1rem;
+  height: 1px;
+  background: var(--ember);
+  opacity: 0.35;
+}
 
-.card h3 { margin: 0 0 0.4rem; font-size: 1rem; text-transform: capitalize; }
+.card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 18px var(--shadow);
+}
 
-.card .book { color: var(--muted); font-size: 0.8rem; margin-bottom: 0.5rem; }
+.card h3 {
+  margin: 1.15rem 0 0.5rem;
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 1.05rem;
+  text-transform: capitalize;
+  text-wrap: balance;
+}
+
+.card .meta {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  color: var(--ink-soft);
+  margin-bottom: 0.6rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
 
 .card .tags { display: flex; flex-wrap: wrap; gap: 0.3rem; }
 
 .card .tag {
-  font-size: 0.7rem;
+  font-size: 0.68rem;
+  font-family: var(--font-mono);
   padding: 0.1rem 0.5rem;
-  border-radius: 999px;
-  background: #333;
-  color: var(--muted);
+  border-radius: 3px;
+  background: var(--surface-2);
+  color: var(--ink-soft);
+  border: 1px solid var(--line);
 }
 
 #empty-state {
-  color: var(--muted);
-  padding: 2rem;
+  color: var(--ink-soft);
+  padding: 2.5rem;
+  text-align: center;
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  grid-column: 1 / -1;
+}
+
+/* ---------- by-book shelf ---------- */
+#shelf-wrap {
+  margin: 1.5rem 0 0;
+  padding: 1.6rem clamp(1rem, 4vw, 2.5rem) 2rem;
+}
+
+#shelf-wrap.book-open { padding: 0; }
+
+#shelf-intro {
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  color: var(--ink-soft);
+  margin-bottom: 1.2rem;
+  max-width: 1200px;
+  margin-inline: auto;
+}
+
+/* The cabinet: a recessed espresso-wood box with side posts, a plank
+   "floor" under each row, and books shaded to look rounded rather than
+   flat rectangles — always this dark regardless of the app's own theme,
+   since it represents physical furniture, not UI chrome. */
+#shelf {
+  max-width: 1200px;
+  margin: 0 auto;
+  position: relative;
+  padding: 22px 0;
+  border-radius: 10px;
+  background: linear-gradient(180deg, #241a10 0%, #180f08 55%, #100a05 100%);
+  box-shadow:
+    inset 0 18px 26px -10px rgba(0, 0, 0, 0.75),
+    inset 14px 0 18px -14px rgba(0, 0, 0, 0.6),
+    inset -14px 0 18px -14px rgba(0, 0, 0, 0.6);
+}
+
+.shelf-post {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 18px;
+  background: linear-gradient(90deg, #3a2a18 0%, #6b4c2e 40%, #4a3320 100%);
+  box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.55);
+}
+.shelf-post.left { left: 0; border-radius: 10px 0 0 10px; }
+.shelf-post.right { right: 0; border-radius: 0 10px 10px 0; }
+
+.shelf-row { padding: 0 28px; }
+.shelf-row + .shelf-row { margin-top: 20px; }
+
+.plank {
+  height: 26px;
+  margin: 10px 0 0;
+  border-radius: 2px;
+  position: relative;
+  background: linear-gradient(180deg, #a9764a 0%, #a9764a 22%, #7a5230 22%, #7a5230 68%, #5c3c20 68%, #5c3c20 100%);
+  box-shadow: 0 10px 16px -6px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.3);
+}
+.plank::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  opacity: 0.5;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='26'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.012 0.4' numOctaves='4' seed='9'/%3E%3CfeColorMatrix type='matrix' values='0 0 0 0 0.05 0 0 0 0 0.02 0 0 0 0 0 0 0 0 0.7 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)'/%3E%3C/svg%3E");
+}
+
+.row {
+  display: flex;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.spine {
+  flex: 0 0 auto;
+  width: 64px;
+  min-height: 150px;
+  border-radius: 1px 1px 0 0;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: space-between;
+  padding: 0.5rem 0.3rem;
+  cursor: pointer;
+  position: relative;
+  /* Round the spine: dark left edge, bright highlight just right of it,
+     gradual falloff to a darker trailing edge, plus a cast shadow onto
+     the book to its right — reads as a curved volume, not a flat card. */
+  background-image: linear-gradient(90deg,
+    rgba(0, 0, 0, 0.38) 0%, rgba(0, 0, 0, 0.1) 5%,
+    rgba(255, 255, 255, 0.32) 13%, rgba(255, 255, 255, 0.06) 24%,
+    rgba(0, 0, 0, 0.04) 55%, rgba(0, 0, 0, 0.22) 88%, rgba(0, 0, 0, 0.4) 100%);
+  box-shadow: 3px 0 7px -3px rgba(0, 0, 0, 0.55), 0 3px 5px -2px rgba(0, 0, 0, 0.4);
+  transition: transform 0.15s ease, opacity 0.2s ease;
+}
+
+.spine::before {
+  /* cloth headband, like a real hardcover spine */
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 8px;
+  border-radius: 1px 1px 0 0;
+  background: repeating-linear-gradient(90deg, rgba(0, 0, 0, 0.22) 0 2px, rgba(255, 255, 255, 0.12) 2px 4px);
+}
+
+.spine-deco {
+  flex: 1 1 auto;
+  min-height: 16px;
+  margin-top: 0.55rem;
+  border-radius: 1px;
+  position: relative;
+  /* fine cloth-weave texture, so the band without an icon still reads as
+     a considered cover rather than an empty gap */
+  background-image: repeating-linear-gradient(180deg, rgba(255, 255, 255, 0.14) 0 1px, transparent 1px 5px);
+}
+
+.spine-icon {
+  position: absolute;
+  inset: 0;
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: 30px 30px;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.5));
+}
+
+.spine:hover { transform: translateY(-5px); }
+
+.spine.active {
+  outline: 2px solid var(--ink);
+  outline-offset: 3px;
+  transform: translateY(-5px);
+}
+
+.spine-plate {
+  flex: 0 0 auto;
+  background: var(--surface);
+  border: 1px solid rgba(0, 0, 0, 0.25);
+  border-radius: 2px;
+  padding: 0.4rem 0.3rem;
   text-align: center;
 }
 
+.spine-title {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 0.72rem;
+  line-height: 1.22;
+  color: var(--ink);
+  white-space: normal;
+  word-break: keep-all;
+}
+
+.spine-rule {
+  height: 1px;
+  margin: 0.32rem auto;
+  width: 60%;
+}
+
+.spine-count {
+  font-family: var(--font-mono);
+  font-weight: 500;
+  font-size: 0.62rem;
+  color: var(--ink-soft);
+}
+
+#book-detail {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 1.75rem clamp(1rem, 4vw, 2.5rem) 2.5rem;
+  background: var(--bg);
+}
+
+#book-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: none;
+  border: none;
+  color: var(--ink-soft);
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  cursor: pointer;
+  padding: 0.3rem 0;
+  margin-bottom: 1.2rem;
+}
+
+#book-back:hover { color: var(--ember); }
+
+#book-detail h2 {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-weight: 600;
+  font-size: 1.7rem;
+  margin: 0 0 0.6rem;
+}
+
+#book-detail .book-count-line {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--ink-soft);
+  margin: 0 0 0.9rem;
+}
+
+#book-detail .book-desc {
+  font-family: var(--font-body);
+  font-style: italic;
+  font-size: 1rem;
+  color: var(--ink-soft);
+  max-width: 60ch;
+  margin: 0 0 1.4rem;
+  padding-bottom: 1.4rem;
+  border-bottom: 1px solid var(--line);
+}
+
+/* ---------- detail overlay ---------- */
 #detail-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.65);
+  background: rgba(20, 14, 6, 0.55);
   display: flex;
   align-items: flex-start;
   justify-content: center;
   padding: 3rem 1rem;
   overflow-y: auto;
-  z-index: 20;
+  z-index: 40;
 }
 
-#detail-overlay.hidden { display: none; }
+#detail-overlay[hidden] { display: none; }
 
 #detail-panel {
-  background: var(--panel);
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  max-width: 680px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  max-width: 640px;
   width: 100%;
-  padding: 2rem;
+  padding: 1.3rem 2.1rem 2.3rem;
   position: relative;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.35);
 }
 
 #detail-actions {
-  position: absolute;
-  top: 1rem;
-  right: 1rem;
   display: flex;
   align-items: center;
-  gap: 0.75rem;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  margin-bottom: 0.6rem;
 }
 
-#detail-print {
-  padding: 0.35rem 0.8rem;
+#detail-download {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.35rem 0.7rem;
   border-radius: 999px;
-  border: 1px solid var(--border);
-  background: transparent;
-  color: var(--muted);
-  font-size: 0.8rem;
+  border: 1px solid var(--line);
+  background: var(--surface-2);
+  color: var(--ink-soft);
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
   cursor: pointer;
+  white-space: nowrap;
 }
 
-#detail-print:hover {
-  border-color: var(--accent);
-  color: var(--accent);
-}
+#detail-download:hover { border-color: var(--ember); color: var(--ember); }
+#detail-download .icon { font-size: 0.85rem; line-height: 1; }
 
 #detail-close {
   background: none;
   border: none;
-  color: var(--muted);
+  color: var(--ink-soft);
   font-size: 1.5rem;
   cursor: pointer;
   line-height: 1;
+  padding: 0 0.2rem;
 }
 
-#detail-content h2 { text-transform: capitalize; margin-top: 0; }
-#detail-content h4 { color: var(--accent); margin-bottom: 0.4rem; }
-#detail-content .book { color: var(--muted); font-size: 0.85rem; margin-bottom: 1rem; }
-#detail-content ol, #detail-content ul { padding-left: 1.2rem; }
-#detail-content li { margin-bottom: 0.4rem; }
-#detail-content .notes { white-space: pre-wrap; color: var(--muted); font-size: 0.9rem; }
+#detail-close:hover { color: var(--ember); }
 
+#detail-content h2 {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-weight: 600;
+  text-transform: capitalize;
+  margin: 0 0 0.7rem;
+  font-size: 1.55rem;
+  text-wrap: balance;
+}
+
+#detail-divider {
+  height: 1px;
+  background: var(--ember-soft);
+  opacity: 0.45;
+  margin: 0 0 0.7rem;
+}
+
+#detail-content .meta {
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  color: var(--ink-soft);
+  margin-bottom: 1.6rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+#detail-content h4 {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--ember);
+  margin: 1.5rem 0 0.6rem;
+}
+
+#detail-content ol, #detail-content ul { padding-left: 1.2rem; margin: 0; }
+#detail-content li { margin-bottom: 0.5rem; line-height: 1.55; }
+#detail-content .notes {
+  white-space: pre-wrap;
+  color: var(--ink-soft);
+  font-size: 0.88rem;
+  line-height: 1.55;
+  font-style: italic;
+}
+
+@media (max-width: 640px) {
+  #wordmark { font-size: 1.55rem; }
+  #topbar-row { gap: 0.6rem; }
+  #tabs { gap: 1.1rem; }
+  #tabs button { font-size: 0.86rem; padding-bottom: 0.6rem; }
+  #topbar { padding: 0.9rem 1rem 0; }
+  #controls { padding: 0 1rem; }
+  #search-row { max-width: none; }
+  #grid { padding: 1rem; grid-template-columns: 1fr; }
+  #shelf-wrap { padding: 1.2rem 0.6rem 1.5rem; }
+  .shelf-post { width: 12px; }
+  .shelf-row { padding: 0 18px; }
+  .plank { margin: 0 4px 16px; }
+  .spine-title { font-size: 0.66rem; }
+  #book-detail { padding: 1.2rem 1rem; }
+  #book-detail .card-grid { grid-template-columns: 1fr; }
+  #detail-overlay { padding: 0; align-items: stretch; }
+  #detail-panel { max-width: none; width: 100%; min-height: 100%; border-radius: 0; padding: 1rem 1.1rem 2rem; }
+  #detail-content h2 { font-size: 1.3rem; }
+  #detail-download .label { display: none; }
+  #detail-download { padding: 0.5rem 0.6rem; }
+  #detail-close { font-size: 1.7rem; padding: 0.3rem; }
+}
+
+/* Printing / "download as PDF": browsers turn Print > Save as PDF into a
+   download, so the recipe-only print stylesheet below is what makes the
+   Download button actually produce a clean recipe card. */
 @media print {
-  header,
-  #detail-close,
-  #detail-print {
+  #topbar, #controls, #grid, #shelf-wrap, #detail-close, #detail-download, #detail-actions {
     display: none !important;
   }
-
-  #grid {
-    display: none;
-  }
-
-  #detail-overlay {
-    position: static;
-    background: none;
-    padding: 0;
-    display: block;
-  }
-
-  #detail-panel {
-    box-shadow: none;
-    border: none;
-    max-width: none;
-    padding: 0;
-  }
-
-  #detail-content, #detail-content h2, #detail-content h4, #detail-content .notes {
-    color: #000;
-  }
-
-  #detail-content .book {
-    color: #444;
-  }
+  body { background: #fff; }
+  #detail-overlay { position: static; background: none; padding: 0; display: block; }
+  #detail-panel { box-shadow: none; border: none; max-width: none; padding: 0; }
+  #detail-content, #detail-content h2, #detail-content h4, #detail-content .notes { color: #000; }
+  #detail-content .meta { color: #444; }
+  #detail-divider { background: #999; opacity: 1; }
 }

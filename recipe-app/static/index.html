@@ -3,26 +3,50 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Recipes</title>
+  <title>Cookbook Shelf</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500;1,9..144,600&family=Karla:ital,wght@0,400;0,500;0,600;0,700;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="/style.css" />
 </head>
 <body>
-  <header>
-    <h1>Recipes</h1>
+  <header id="topbar">
+    <div id="topbar-row">
+      <h1 id="wordmark">Cookbook Shelf<span class="accent-dot">.</span></h1>
+      <div id="theme-toggle" role="group" aria-label="Theme">
+        <button type="button" data-theme-choice="light">Light</button>
+        <button type="button" data-theme-choice="dark">Dark</button>
+      </div>
+    </div>
+    <nav id="tabs">
+      <button type="button" data-tab="all" class="active">All Recipes</button>
+      <button type="button" data-tab="books">By Book</button>
+    </nav>
+  </header>
+
+  <section id="controls">
     <div id="search-row">
-      <input id="search" type="search" placeholder="Search title or ingredients..." autocomplete="off" />
+      <input id="search" type="search" placeholder="Search title or ingredients…" autocomplete="off" />
       <button id="random-btn" type="button">Random</button>
     </div>
     <div id="tag-filters"></div>
-  </header>
+  </section>
 
   <main id="grid"></main>
 
-  <div id="detail-overlay" class="hidden">
+  <section id="shelf-wrap" hidden>
+    <div id="shelf-intro">Loading cookbooks…</div>
+    <div id="shelf"></div>
+    <div id="book-detail" hidden></div>
+  </section>
+
+  <div id="detail-overlay" hidden>
     <div id="detail-panel">
       <div id="detail-actions">
-        <button id="detail-print" type="button">Print</button>
-        <button id="detail-close">&times;</button>
+        <button id="detail-download" type="button" title="Opens your browser's print dialog — choose “Save as PDF” to download">
+          <span class="icon">&#8595;</span><span class="label">Download</span>
+        </button>
+        <button id="detail-close" aria-label="Close">&times;</button>
       </div>
       <div id="detail-content"></div>
     </div>
