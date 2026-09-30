@@ -42,7 +42,9 @@
     "williams-sonoma-weeknightfreshandfast": { name: "Weeknight Fresh and Fast", series: "Williams-Sonoma", icon: "lightning",
       desc: "Fast dinners under thirty minutes, leaning on fresh produce and simple pan sauces." },
     "bakingforeveryseason": { name: "Baking for Every Season", icon: "wheat",
-      desc: "A baking book organized by season, following fruit and spice through the year." }
+      desc: "A baking book organized by season, following fruit and spice through the year." },
+    "adrianskitchen": { name: "Adrian's Kitchen", icon: "heart",
+      desc: "Personal recipes worth keeping — written from scratch, not scanned from someone else's cookbook." }
   };
 
   function prettifySlug(slug) {
@@ -84,7 +86,8 @@
     snowflake: "<g stroke='white' stroke-opacity='0.9' stroke-width='1.6' stroke-linecap='round'><line x1='12' y1='3' x2='12' y2='21'/><line x1='4' y1='7' x2='20' y2='17'/><line x1='20' y1='7' x2='4' y2='17'/></g>",
     chili: "<path d='M9 3c2 1 0 3-1 5-3 5 0 12 6 11 5-1 6-8 3-12-2-3-4-1-5-3-1-1-2-1-3-1z' fill='white' fill-opacity='0.9'/>",
     lightning: "<path d='M13 2L4 14h6l-1 8 9-12h-6l1-8z' fill='white' fill-opacity='0.9'/>",
-    slice: "<path d='M4 19L12 5l8 14z' fill='white' fill-opacity='0.9'/><line x1='7.5' y1='14' x2='16.5' y2='14' stroke='white' stroke-opacity='0.55' stroke-width='1'/>"
+    slice: "<path d='M4 19L12 5l8 14z' fill='white' fill-opacity='0.9'/><line x1='7.5' y1='14' x2='16.5' y2='14' stroke='white' stroke-opacity='0.55' stroke-width='1'/>",
+    heart: "<path d='M12 21s-7-4.3-9.5-8.5C1 9.5 2 6 5.5 6c2 0 3.3 1.1 4 2.2C10.2 7.1 11.5 6 13.5 6 17 6 18 9.5 16.5 12.5 14 16.7 12 21 12 21z' fill='white' fill-opacity='0.9'/>"
   };
 
   function iconFor(slug) {
