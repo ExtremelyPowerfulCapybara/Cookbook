@@ -204,17 +204,37 @@
     if (recipe) openDetail(recipe);
   }
 
+  // Notes often lead with a yield line ("SERVES 4", "Makes about 18
+  // macaroons.") — pull that out to sit in the meta line next to the book
+  // and page, the way a printed recipe card would, instead of burying it
+  // in a paragraph of notes.
+  function splitServing(notes) {
+    if (!notes) return { serving: null, rest: notes };
+    var m = notes.match(/^\s*((?:makes|serves|yields?)\b[^.\n]*)[.\n]?\s*/i);
+    if (!m) return { serving: null, rest: notes };
+    return { serving: m[1].trim(), rest: notes.slice(m[0].length).trim() };
+  }
+
   function openDetail(recipe) {
     var pages = recipe.source_pages && recipe.source_pages.length === 2
       ? (recipe.source_pages[0] === recipe.source_pages[1] ? "p. " + recipe.source_pages[0] : "pp. " + recipe.source_pages[0] + "–" + recipe.source_pages[1])
       : "";
+    var split = splitServing(recipe.notes);
+    var metaParts = [];
+    if (split.serving) metaParts.push(split.serving);
+    metaParts.push(escapeHtml(bookDisplay(recipe.source_book)));
+    if (pages) metaParts.push(pages);
+
     detailContent.innerHTML =
+      '<div class="eyebrow">' + escapeHtml(bookDisplay(recipe.source_book)) + "</div>" +
       "<h2>" + escapeHtml(recipe.title.toLowerCase()) + "</h2>" +
       '<div id="detail-divider"></div>' +
-      '<div class="meta">' + escapeHtml(bookDisplay(recipe.source_book)) + (pages ? " · " + pages : "") + "</div>" +
-      "<h4>Ingredients</h4><ul>" + recipe.ingredients.map(function (i) { return "<li>" + escapeHtml(i) + "</li>"; }).join("") + "</ul>" +
-      "<h4>Instructions</h4><ol>" + recipe.instructions.map(function (s) { return "<li>" + escapeHtml(s) + "</li>"; }).join("") + "</ol>" +
-      (recipe.notes ? '<h4>Notes</h4><div class="notes">' + escapeHtml(recipe.notes) + "</div>" : "");
+      '<div class="meta">' + metaParts.join(" · ") + "</div>" +
+      '<div id="detail-body">' +
+      '<div class="ingredients-col"><h4>Ingredients</h4><ul>' + recipe.ingredients.map(function (i) { return "<li>" + escapeHtml(i) + "</li>"; }).join("") + "</ul></div>" +
+      '<div class="instructions-col"><h4>Instructions</h4><ol>' + recipe.instructions.map(function (s) { return "<li>" + escapeHtml(s) + "</li>"; }).join("") + "</ol></div>" +
+      "</div>" +
+      (split.rest ? '<div class="notes-callout"><h4>Notes</h4><div class="notes">' + escapeHtml(split.rest) + "</div></div>" : "");
     overlay.hidden = false;
   }
 

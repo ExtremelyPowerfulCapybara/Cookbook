@@ -213,6 +213,11 @@ a { color: inherit; }
   margin: 0 auto;
 }
 
+/* #grid is an ID selector, which otherwise beats the browser's own
+   [hidden]{display:none} rule — without this, grid.hidden = true in JS
+   silently does nothing and "All Recipes" keeps showing under "By Book". */
+#grid[hidden] { display: none; }
+
 .card-grid { padding: 0; max-width: none; margin: 1rem 0 0; }
 
 .card {
@@ -562,6 +567,16 @@ a { color: inherit; }
 
 #detail-close:hover { color: var(--ember); }
 
+.eyebrow {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--ember);
+  margin-bottom: 0.4rem;
+}
+
 #detail-content h2 {
   font-family: var(--font-display);
   font-style: italic;
@@ -599,12 +614,23 @@ a { color: inherit; }
 
 #detail-content ol, #detail-content ul { padding-left: 1.2rem; margin: 0; }
 #detail-content li { margin-bottom: 0.5rem; line-height: 1.55; }
+
+.ingredients-col h4, .instructions-col h4 { margin-top: 0; }
+.instructions-col { margin-top: 1.5rem; }
+
+.notes-callout {
+  margin-top: 1.6rem;
+  padding: 0.9rem 1.1rem;
+  background: var(--surface-2);
+  border-left: 3px solid var(--ember-soft);
+  border-radius: 0 4px 4px 0;
+}
+.notes-callout h4 { margin-top: 0; }
 #detail-content .notes {
   white-space: pre-wrap;
   color: var(--ink-soft);
   font-size: 0.88rem;
   line-height: 1.55;
-  font-style: italic;
 }
 
 @media (max-width: 640px) {
@@ -642,6 +668,45 @@ a { color: inherit; }
   #detail-overlay { position: static; background: none; padding: 0; display: block; }
   #detail-panel { box-shadow: none; border: none; max-width: none; padding: 0; }
   #detail-content, #detail-content h2, #detail-content h4, #detail-content .notes { color: #000; }
+  .eyebrow { color: #a8451f; }
   #detail-content .meta { color: #444; }
   #detail-divider { background: #999; opacity: 1; }
+
+  /* Ingredients beside instructions, like a printed recipe card, instead
+     of one long scrolling column. */
+  #detail-body {
+    display: grid;
+    grid-template-columns: 1fr 1.4fr;
+    gap: 2rem;
+    align-items: start;
+  }
+
+  /* Numbered steps as bold leading numerals instead of default list
+     markers — 01, 02, 03… */
+  .instructions-col ol {
+    list-style: none;
+    counter-reset: step;
+    padding-left: 0;
+  }
+  .instructions-col li {
+    counter-increment: step;
+    position: relative;
+    padding-left: 2.1rem;
+    margin-bottom: 0.9rem;
+  }
+  .instructions-col li::before {
+    content: counter(step, decimal-leading-zero);
+    position: absolute;
+    left: 0;
+    top: 0;
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-weight: 700;
+    font-size: 0.85rem;
+    color: #a8451f;
+  }
+
+  .notes-callout {
+    background: #f2ede0;
+    border-left: 3px solid #a8451f;
+  }
 }
