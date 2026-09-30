@@ -1,0 +1,7 @@
+tunnel: 8a46c95b-fcbc-422b-a2d4-8ae07362250c
+credentials-file: /etc/cloudflared/8a46c95b-fcbc-422b-a2d4-8ae07362250c.json
+
+ingress:
+  - hostname: recipes.mustardhq.dev
+    service: http://recipe-app:5000
+  - service: http_status:404

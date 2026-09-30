@@ -3,11 +3,18 @@ services:
     build: .
     container_name: recipe-app
     restart: always
-    ports:
-      - "5050:5000"  # adjust the host port if it collides with something else
     volumes:
-      # Point this at the Recipes/ folder inside the vault once it lives on
-      # this machine. Read-only: the app only ever reads notes, never writes.
-      - "C:/PATH/TO/Second Brain/Recipes:/data/recipes:ro"
+      # Read-only: the app only ever reads notes, never writes.
+      - "C:/Sharing/Second Brain/Recipes:/data/recipes:ro"
     environment:
       RECIPES_DIR: /data/recipes
+
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    container_name: recipe-app-tunnel
+    restart: always
+    command: tunnel --config /etc/cloudflared/config.yml run
+    volumes:
+      - ./cloudflared:/etc/cloudflared:ro
+    depends_on:
+      - recipe-app
