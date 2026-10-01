@@ -44,7 +44,9 @@
     "bakingforeveryseason": { name: "Baking for Every Season", icon: "wheat",
       desc: "A baking book organized by season, following fruit and spice through the year." },
     "adrianskitchen": { name: "Adrian's Kitchen", icon: "heart",
-      desc: "Personal recipes worth keeping — written from scratch, not scanned from someone else's cookbook." }
+      desc: "Personal recipes worth keeping — written from scratch, not scanned from someone else's cookbook." },
+    "vikalinka": { name: "Vikalinka", icon: "globe",
+      desc: "Recipes pulled in from vikalinka.com — quick, everyday dishes spanning a wide range of cuisines." }
   };
 
   function prettifySlug(slug) {
@@ -87,7 +89,8 @@
     chili: "<path d='M9 3c2 1 0 3-1 5-3 5 0 12 6 11 5-1 6-8 3-12-2-3-4-1-5-3-1-1-2-1-3-1z' fill='white' fill-opacity='0.9'/>",
     lightning: "<path d='M13 2L4 14h6l-1 8 9-12h-6l1-8z' fill='white' fill-opacity='0.9'/>",
     slice: "<path d='M4 19L12 5l8 14z' fill='white' fill-opacity='0.9'/><line x1='7.5' y1='14' x2='16.5' y2='14' stroke='white' stroke-opacity='0.55' stroke-width='1'/>",
-    heart: "<path d='M12 21s-7-4.3-9.5-8.5C1 9.5 2 6 5.5 6c2 0 3.3 1.1 4 2.2C10.2 7.1 11.5 6 13.5 6 17 6 18 9.5 16.5 12.5 14 16.7 12 21 12 21z' fill='white' fill-opacity='0.9'/>"
+    heart: "<path d='M12 21s-7-4.3-9.5-8.5C1 9.5 2 6 5.5 6c2 0 3.3 1.1 4 2.2C10.2 7.1 11.5 6 13.5 6 17 6 18 9.5 16.5 12.5 14 16.7 12 21 12 21z' fill='white' fill-opacity='0.9'/>",
+    globe: "<circle cx='12' cy='12' r='8' fill='none' stroke='white' stroke-opacity='0.9' stroke-width='1.5'/><ellipse cx='12' cy='12' rx='3.3' ry='8' fill='none' stroke='white' stroke-opacity='0.9' stroke-width='1.3'/><line x1='4.2' y1='12' x2='19.8' y2='12' stroke='white' stroke-opacity='0.9' stroke-width='1.3'/>"
   };
 
   function iconFor(slug) {
@@ -101,7 +104,17 @@
 
   function buildBooks() {
     var counts = {};
-    RECIPES.forEach(function (r) { counts[r.source_book] = (counts[r.source_book] || 0) + 1; });
+    var missing = 0;
+    RECIPES.forEach(function (r) {
+      if (!r.source_book) { missing++; return; }
+      counts[r.source_book] = (counts[r.source_book] || 0) + 1;
+    });
+    if (missing > 0) {
+      // Surfaces a vault export mistake (a book's recipes missing
+      // source_book in frontmatter) as a visible warning instead of a
+      // mysterious "Null" shelf with recipes that can't be found.
+      console.warn(missing + " recipe(s) have no source_book set and are excluded from the By Book shelf.");
+    }
     BOOKS = {};
     Object.keys(counts).forEach(function (slug) {
       var meta = BOOK_META[slug];
