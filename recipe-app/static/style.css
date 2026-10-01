@@ -513,7 +513,16 @@ a { color: inherit; }
   justify-content: center;
   padding: 3rem 1rem;
   overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
   z-index: 40;
+  isolation: isolate;
+  /* Forces its own GPU compositing layer. Without this, some Android
+     Chrome versions repaint a fixed overlay incorrectly during scroll or
+     while the URL bar collapses, briefly showing the page behind it. */
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
 }
 
 #detail-overlay[hidden] { display: none; }
@@ -527,6 +536,8 @@ a { color: inherit; }
   padding: 1.3rem 2.1rem 2.3rem;
   position: relative;
   box-shadow: 0 20px 50px rgba(0, 0, 0, 0.35);
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
 }
 
 #detail-actions {
