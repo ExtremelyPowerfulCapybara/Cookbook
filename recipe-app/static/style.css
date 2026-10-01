@@ -503,50 +503,43 @@ a { color: inherit; }
   border-bottom: 1px solid var(--line);
 }
 
-/* ---------- detail overlay ---------- */
-#detail-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(20, 14, 6, 0.55);
-  display: flex;
-  align-items: flex-start;
-  justify-content: center;
-  padding: 3rem 1rem;
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
-  z-index: 40;
-  isolation: isolate;
-  /* Forces its own GPU compositing layer. Without this, some Android
-     Chrome versions repaint a fixed overlay incorrectly during scroll or
-     while the URL bar collapses, briefly showing the page behind it. */
-  transform: translateZ(0);
-  -webkit-transform: translateZ(0);
-  backface-visibility: hidden;
-  -webkit-backface-visibility: hidden;
-}
-
+/* ---------- recipe detail page ---------- */
+/* A recipe replaces the grid/shelf in normal document flow — the same
+   pattern as the By Book page — rather than floating on top of it as a
+   position:fixed modal. Firefox for Android has a long-standing bug where
+   fixed-position elements repaint incorrectly during active scrolling, so
+   the page behind a fixed overlay can show through no matter how that
+   overlay itself is styled; avoiding position:fixed entirely sidesteps it. */
 #detail-overlay[hidden] { display: none; }
 
 #detail-panel {
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: 6px;
-  max-width: 640px;
-  width: 100%;
-  padding: 1.3rem 2.1rem 2.3rem;
-  position: relative;
-  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.35);
-  transform: translateZ(0);
-  -webkit-transform: translateZ(0);
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 1.75rem clamp(1rem, 4vw, 2.5rem) 3rem;
 }
 
 #detail-actions {
   display: flex;
   align-items: center;
-  justify-content: flex-end;
+  justify-content: space-between;
   gap: 0.5rem;
-  margin-bottom: 0.6rem;
+  margin-bottom: 1rem;
 }
+
+#detail-close {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: none;
+  border: none;
+  color: var(--ink-soft);
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  cursor: pointer;
+  padding: 0.3rem 0;
+}
+
+#detail-close:hover { color: var(--ember); }
 
 #detail-download {
   display: flex;
@@ -565,18 +558,6 @@ a { color: inherit; }
 
 #detail-download:hover { border-color: var(--ember); color: var(--ember); }
 #detail-download .icon { font-size: 0.85rem; line-height: 1; }
-
-#detail-close {
-  background: none;
-  border: none;
-  color: var(--ink-soft);
-  font-size: 1.5rem;
-  cursor: pointer;
-  line-height: 1;
-  padding: 0 0.2rem;
-}
-
-#detail-close:hover { color: var(--ember); }
 
 .eyebrow {
   font-family: var(--font-mono);
@@ -660,12 +641,10 @@ a { color: inherit; }
   .spine-title { font-size: 0.66rem; }
   #book-detail { padding: 1.2rem 1rem; }
   #book-detail .card-grid { grid-template-columns: 1fr; }
-  #detail-overlay { padding: 0; align-items: stretch; }
-  #detail-panel { max-width: none; width: 100%; min-height: 100%; border-radius: 0; padding: 1rem 1.1rem 2rem; }
+  #detail-panel { padding: 1.2rem 1rem 2rem; }
   #detail-content h2 { font-size: 1.3rem; }
   #detail-download .label { display: none; }
   #detail-download { padding: 0.5rem 0.6rem; }
-  #detail-close { font-size: 1.7rem; padding: 0.3rem; }
 }
 
 /* Printing / "download as PDF": browsers turn Print > Save as PDF into a
@@ -676,8 +655,7 @@ a { color: inherit; }
     display: none !important;
   }
   body { background: #fff; }
-  #detail-overlay { position: static; background: none; padding: 0; display: block; }
-  #detail-panel { box-shadow: none; border: none; max-width: none; padding: 0; }
+  #detail-panel { max-width: none; padding: 0; }
   #detail-content, #detail-content h2, #detail-content h4, #detail-content .notes { color: #000; }
   .eyebrow { color: #a8451f; }
   #detail-content .meta { color: #444; }

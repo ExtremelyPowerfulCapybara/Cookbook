@@ -231,6 +231,10 @@
     return { serving: m[1].trim(), rest: notes.slice(m[0].length).trim() };
   }
 
+  // Remembers which view was on screen before a recipe was opened, so
+  // "Back" returns to the right place (the grid, or the By Book shelf/page).
+  var returnToBooks = false;
+
   function openDetail(recipe) {
     var pages = recipe.source_pages && recipe.source_pages.length === 2
       ? (recipe.source_pages[0] === recipe.source_pages[1] ? "p. " + recipe.source_pages[0] : "pp. " + recipe.source_pages[0] + "–" + recipe.source_pages[1])
@@ -251,37 +255,33 @@
       '<div class="instructions-col"><h4>Instructions</h4><ol>' + recipe.instructions.map(function (s) { return "<li>" + escapeHtml(s) + "</li>"; }).join("") + "</ol></div>" +
       "</div>" +
       (split.rest ? '<div class="notes-callout"><h4>Notes</h4><div class="notes">' + escapeHtml(split.rest) + "</div></div>" : "");
-    overlay.hidden = false;
-    lockBodyScroll();
-  }
 
-  // Mobile browsers can glitch a position:fixed overlay — letting the
-  // background bleed through while scrolling — when the page behind it is
-  // also scrollable. Locking the body to the current scroll position while
-  // the overlay is open, and restoring it on close, avoids that entirely.
-  var lockedScrollY = 0;
-  function lockBodyScroll() {
-    lockedScrollY = window.scrollY;
-    document.body.style.position = "fixed";
-    document.body.style.top = -lockedScrollY + "px";
-    document.body.style.left = "0";
-    document.body.style.right = "0";
-  }
-  function unlockBodyScroll() {
-    document.body.style.position = "";
-    document.body.style.top = "";
-    document.body.style.left = "";
-    document.body.style.right = "";
-    window.scrollTo(0, lockedScrollY);
+    // A recipe replaces whatever's on screen in normal document flow —
+    // same pattern as the By Book page — rather than floating on top of it
+    // as a position:fixed modal. Firefox for Android has a long-standing
+    // bug where fixed-position elements repaint incorrectly during active
+    // scrolling (tied to its dynamic URL-bar compositing), letting the
+    // page underneath show through no matter how the fixed layer itself is
+    // styled. Not using position:fixed at all sidesteps it entirely.
+    returnToBooks = !shelfWrap.hidden;
+    controlsEl.hidden = true;
+    grid.hidden = true;
+    shelfWrap.hidden = true;
+    overlay.hidden = false;
+    window.scrollTo(0, 0);
   }
 
   function closeDetail() {
     overlay.hidden = true;
-    unlockBodyScroll();
+    if (returnToBooks) {
+      shelfWrap.hidden = false;
+    } else {
+      controlsEl.hidden = false;
+      grid.hidden = false;
+    }
   }
 
   document.getElementById("detail-close").onclick = closeDetail;
-  overlay.onclick = function (e) { if (e.target === overlay) closeDetail(); };
   document.getElementById("detail-download").onclick = function () { window.print(); };
 
   randomBtn.onclick = function () {
