@@ -252,10 +252,36 @@
       "</div>" +
       (split.rest ? '<div class="notes-callout"><h4>Notes</h4><div class="notes">' + escapeHtml(split.rest) + "</div></div>" : "");
     overlay.hidden = false;
+    lockBodyScroll();
   }
 
-  document.getElementById("detail-close").onclick = function () { overlay.hidden = true; };
-  overlay.onclick = function (e) { if (e.target === overlay) overlay.hidden = true; };
+  // Mobile browsers can glitch a position:fixed overlay — letting the
+  // background bleed through while scrolling — when the page behind it is
+  // also scrollable. Locking the body to the current scroll position while
+  // the overlay is open, and restoring it on close, avoids that entirely.
+  var lockedScrollY = 0;
+  function lockBodyScroll() {
+    lockedScrollY = window.scrollY;
+    document.body.style.position = "fixed";
+    document.body.style.top = -lockedScrollY + "px";
+    document.body.style.left = "0";
+    document.body.style.right = "0";
+  }
+  function unlockBodyScroll() {
+    document.body.style.position = "";
+    document.body.style.top = "";
+    document.body.style.left = "";
+    document.body.style.right = "";
+    window.scrollTo(0, lockedScrollY);
+  }
+
+  function closeDetail() {
+    overlay.hidden = true;
+    unlockBodyScroll();
+  }
+
+  document.getElementById("detail-close").onclick = closeDetail;
+  overlay.onclick = function (e) { if (e.target === overlay) closeDetail(); };
   document.getElementById("detail-download").onclick = function () { window.print(); };
 
   randomBtn.onclick = function () {
